@@ -20,8 +20,7 @@ function App() {
     setLoading(true);
     const q = query(
       collection(db, 'logs'),
-      where('date', '==', dateStr),
-      orderBy('timestamp', 'desc')
+      where('date', '==', dateStr)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -29,6 +28,9 @@ function App() {
         id: doc.id,
         ...doc.data()
       }));
+      // Sort descending in memory to avoid requiring a Firestore composite index
+      logsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      
       setLogs(logsData);
       setLoading(false);
     }, (error) => {
