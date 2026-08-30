@@ -1,7 +1,7 @@
 import { format, parseISO } from 'date-fns';
 import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Trash2, Moon, Baby, Utensils } from 'lucide-react';
+import { Trash2, Moon, Baby, Utensils, Pill } from 'lucide-react';
 
 export default function Timeline({ logs }) {
   const handleDelete = async (id) => {
@@ -34,6 +34,7 @@ export default function Timeline({ logs }) {
       case 'sleep': return <Moon size={16} className="text-indigo-500" />;
       case 'nappy': return <Baby size={16} className="text-pink-500" />;
       case 'meal': return <Utensils size={16} className="text-orange-500" />;
+      case 'medicine': return <Pill size={16} className="text-red-500" />;
       default: return null;
     }
   };
@@ -46,6 +47,8 @@ export default function Timeline({ logs }) {
         return `Nappy: ${log.action}`;
       case 'meal':
         return `${log.mealType}: ${log.description} (${log.amount})`;
+      case 'medicine':
+        return `Medicine: ${log.name} (${log.amount})`;
       default:
         return 'Unknown';
     }

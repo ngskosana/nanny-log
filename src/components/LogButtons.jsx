@@ -11,16 +11,22 @@ export default function LogButtons({ dateStr }) {
   const [mealDesc, setMealDesc] = useState('');
   const [mealAmt, setMealAmt] = useState('All');
 
+  // Medicine state
+  const [medicineName, setMedicineName] = useState('');
+  const [medicineAmount, setMedicineAmount] = useState('');
+
   const addLog = async (data) => {
     try {
       const now = new Date();
       await addDoc(collection(db, 'logs'), {
         ...data,
         timestamp: now.toISOString(),
-        date: dateStr // allow logging for "selectedDate" but timestamp is now. Or if logging for past day, might need time picker. Simple for now: log in current time, but assigned to selected date. Wait, if dateStr is different than today, the timeline will show today's time. Let's just use current timestamp and assign to the `dateStr` so it shows up in that day's timeline.
+        date: dateStr 
       });
       // reset forms
       setMealDesc('');
+      setMedicineName('');
+      setMedicineAmount('');
     } catch (e) {
       console.error("Error adding log: ", e);
     }
@@ -35,14 +41,20 @@ export default function LogButtons({ dateStr }) {
     addLog({ type: 'meal', mealType, description: mealDesc, amount: mealAmt });
   };
 
+  const handleMedicine = (e) => {
+    e.preventDefault();
+    if (!medicineName || !medicineAmount) return;
+    addLog({ type: 'medicine', name: medicineName, amount: medicineAmount });
+  };
+
   return (
     <div className="bg-white rounded-2xl border overflow-hidden">
-      <div className="flex border-b">
-        {['sleep', 'meal', 'nappy'].map(tab => (
+      <div className="flex border-b overflow-x-auto">
+        {['sleep', 'meal', 'nappy', 'medicine'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-3 text-sm font-medium capitalize ${
+            className={`flex-1 min-w-[80px] py-3 text-sm font-medium capitalize whitespace-nowrap ${
               activeTab === tab ? 'bg-gray-100 text-gray-900 border-b-2 border-indigo-500' : 'text-gray-500 hover:bg-gray-50'
             }`}
           >
@@ -122,6 +134,30 @@ export default function LogButtons({ dateStr }) {
 
             <button type="submit" className="w-full py-3 bg-green-500 text-white font-bold rounded-xl active:bg-green-600 text-lg">
               Save Meal
+            </button>
+          </form>
+        )}
+
+        {activeTab === 'medicine' && (
+          <form onSubmit={handleMedicine} className="space-y-4">
+            <input
+              type="text"
+              value={medicineName}
+              onChange={(e) => setMedicineName(e.target.value)}
+              placeholder="Medicine (e.g., Calpol)"
+              className="w-full p-3 bg-gray-50 border rounded-xl"
+              required
+            />
+            <input
+              type="text"
+              value={medicineAmount}
+              onChange={(e) => setMedicineAmount(e.target.value)}
+              placeholder="Amount (e.g., 5ml)"
+              className="w-full p-3 bg-gray-50 border rounded-xl"
+              required
+            />
+            <button type="submit" className="w-full py-3 bg-red-500 text-white font-bold rounded-xl active:bg-red-600 text-lg">
+              Save Medicine
             </button>
           </form>
         )}
