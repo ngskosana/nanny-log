@@ -1,5 +1,5 @@
 import { format, parseISO } from 'date-fns';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Trash2, Moon, Baby, Utensils } from 'lucide-react';
 
@@ -11,6 +11,21 @@ export default function Timeline({ logs }) {
       } catch (error) {
         console.error("Error deleting document: ", error);
       }
+    }
+  };
+
+  const handleTimeChange = async (id, currentTimestamp, newTimeStr) => {
+    if (!newTimeStr) return;
+    try {
+      const dateObj = parseISO(currentTimestamp);
+      const [hours, minutes] = newTimeStr.split(':');
+      dateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+      
+      await updateDoc(doc(db, 'logs', id), {
+        timestamp: dateObj.toISOString()
+      });
+    } catch (error) {
+      console.error("Error updating time: ", error);
     }
   };
 
@@ -44,9 +59,18 @@ export default function Timeline({ logs }) {
       ) : (
         <div className="space-y-4">
           {logs.map(log => (
-            <div key={log.id} className="flex items-start gap-4">
-              <div className="text-sm text-gray-500 w-12 pt-1 font-mono">
-                {format(parseISO(log.timestamp), 'HH:mm')}
+            <div key={log.id} className="flex items-center gap-2">
+              <div className="w-16">
+                <input 
+                  type="time" 
+                  defaultValue={format(parseISO(log.timestamp), 'HH:mm')}
+                  onBlur={(e) => {
+                    if(e.target.value !== format(parseISO(log.timestamp), 'HH:mm')) {
+                      handleTimeChange(log.id, log.timestamp, e.target.value)
+                    }
+                  }}
+                  className="text-sm text-gray-600 bg-transparent border-none p-0 focus:ring-0 w-full font-mono cursor-pointer"
+                />
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl p-3 flex items-center justify-between group">
                 <div className="flex items-center gap-3">
