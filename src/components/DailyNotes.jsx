@@ -4,7 +4,8 @@ import { db } from '../firebase';
 import { MessageSquare } from 'lucide-react';
 
 const MOODS = [
-  { id: 'angry', emoji: '😠', label: 'Angry' },
+  { id: 'angry', emoji: '😡', label: 'Angry' },
+  { id: 'grumpy', emoji: '😠', label: 'Grumpy' },
   { id: 'sad', emoji: '☹️', label: 'Sad' },
   { id: 'okay', emoji: '😐', label: 'Okay' },
   { id: 'happy', emoji: '🙂', label: 'Happy' },
@@ -74,9 +75,9 @@ export default function DailyNotes({ dateStr }) {
         <label className="block text-base font-semibold text-gray-700 mb-1">How are you feeling?</label>
         <p className="text-sm text-gray-500 mb-4">Pick the emoji that best captures your mood.</p>
         
-        <div className="flex justify-between items-end mb-6">
+        <div className="flex overflow-x-auto gap-4 items-end mb-6 pb-2">
           {MOODS.map((m) => (
-            <div key={m.id} className="flex flex-col items-center gap-2">
+            <div key={m.id} className="flex flex-col items-center gap-2 min-w-[60px]">
               <button
                 onClick={() => handleMoodSelect(m.id)}
                 disabled={loading}
