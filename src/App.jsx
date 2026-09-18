@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { format, subDays, addDays, isToday, parseISO } from 'date-fns';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { format, subDays, addDays, isToday } from 'date-fns';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
@@ -8,6 +8,7 @@ import SummaryDashboard from './components/SummaryDashboard';
 import LogButtons from './components/LogButtons';
 import Timeline from './components/Timeline';
 import DailyNotes from './components/DailyNotes';
+import ExportButton from './components/ExportButton';
 
 function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -53,12 +54,14 @@ function App() {
       {/* Header & Date Navigation */}
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="flex items-center justify-between p-4">
-          <button 
-            onClick={handlePrevDay}
-            className="p-2 hover:bg-gray-100 rounded-full"
-          >
-            <ChevronLeft size={24} />
-          </button>
+          <div className="flex items-center">
+            <button 
+              onClick={handlePrevDay}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <ChevronLeft size={24} />
+            </button>
+          </div>
           
           <div className="flex flex-col items-center">
             <h1 className="font-bold text-lg flex items-center gap-2">
@@ -67,13 +70,16 @@ function App() {
             </h1>
           </div>
 
-          <button 
-            onClick={handleNextDay}
-            disabled={isToday(selectedDate)}
-            className={`p-2 rounded-full ${isToday(selectedDate) ? 'opacity-30' : 'hover:bg-gray-100'}`}
-          >
-            <ChevronRight size={24} />
-          </button>
+          <div className="flex items-center">
+            <ExportButton selectedDate={selectedDate} />
+            <button 
+              onClick={handleNextDay}
+              disabled={isToday(selectedDate)}
+              className={`p-2 rounded-full ${isToday(selectedDate) ? 'opacity-30' : 'hover:bg-gray-100'}`}
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
         </div>
       </header>
 
