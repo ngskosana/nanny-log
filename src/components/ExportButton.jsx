@@ -21,52 +21,70 @@ export default function ExportButton({ selectedDate }) {
       );
       const logsSnap = await getDocs(qLogs);
       const logs = logsSnap.docs.map(doc => doc.data());
-      logs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-      // Fetch daily notes for the month
-      const qNotes = query(
-        collection(db, 'notes'),
-        // Wait, documents in 'notes' don't necessarily have a 'date' field? 
-        // In DailyNotes.jsx, we just use dateStr as the doc ID. 
-        // We can't query by ID ranges easily without `__name__` but we need to ensure the ID is the date.
-        // I will just skip fetching daily notes in this export, or just export events.
-      );
+      
+      logs.sort((a, b) => {
+        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return timeA - timeB;
+      });
 
       const headers = ['Date', 'Time', 'Type', 'Action/Details'];
       const rows = logs.map(log => {
-        const date = format(new Date(log.timestamp), 'yyyy-MM-dd');
-        const time = format(new Date(log.timestamp), 'HH:mm');
-        let details = '';
+        if (!log.timestamp) return null;
         
-        if (log.type === 'sleep' || log.type === 'nappy') {
-          details = log.action;
-        } else if (log.type === 'meal') {
-          details = `${log.mealType}: ${log.description} (${log.amount})`;
-        } else if (log.type === 'medicine') {
-          details = `${log.name} (${log.amount})`;
+        try {
+          const date = format(new Date(log.timestamp), 'yyyy-MM-dd');
+          const time = format(new Date(log.timestamp), 'HH:mm');
+          let details = '';
+          
+          if (log.type === 'sleep' || log.type === 'nappy') {
+            details = log.action || '';
+          } else if (log.type === 'meal') {
+            details = `${log.mealType || ''}: ${log.description || ''} (${log.amount || ''})`;
+          } else if (log.type === 'medicine') {
+            details = `${log.name || ''} (${log.amount || ''})`;
+          }
+
+          // Escape quotes and wrap in quotes for CSV safety
+          const safeDetails = `"${details.replace(/"/g, '""')}"`;
+
+          return [date, time, log.type || '', safeDetails].join(',');
+        } catch (e) {
+          console.warn("Skipping malformed log", log);
+          return null;
         }
-
-        // Escape quotes and wrap in quotes for CSV safety
-        const safeDetails = `"${details.replace(/"/g, '""')}"`;
-
-        return [date, time, log.type, safeDetails].join(',');
-      });
+      }).filter(Boolean);
 
       const csvContent = [headers.join(','), ...rows].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const fileName = `nanny-log-${format(selectedDate, 'yyyy-MM')}.csv`;
       
-      link.setAttribute('href', url);
-      link.setAttribute('download', `nanny-log-${format(selectedDate, 'yyyy-MM')}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const file = new File([csvContent], fileName, { type: 'text/csv' });
+
+      // Check if native mobile sharing is supported (iOS/Android)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Monthly Nanny Log',
+          text: `Nanny log export for ${format(selectedDate, 'MMMM yyyy')}`
+        });
+      } else {
+        // Fallback for desktop browsers
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
 
     } catch (error) {
       console.error("Error exporting CSV: ", error);
-      alert("Failed to export data. Please try again.");
+      alert("Failed to export data: " + error.message);
     } finally {
       setExporting(false);
     }
@@ -76,7 +94,7 @@ export default function ExportButton({ selectedDate }) {
     <button 
       onClick={handleExport}
       disabled={exporting}
-      className={`p-2 rounded-full hover:bg-gray-100 ${exporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`p-2 rounded-full hover:bg-gray-100 ${exporting ? 'opacity-50 animate-pulse cursor-wait' : ''}`}
       title="Export Monthly Report (CSV)"
     >
       <Download size={20} className="text-gray-600" />
