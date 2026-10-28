@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 
 export default function LogButtons({ dateStr }) {
   const [activeTab, setActiveTab] = useState('sleep');
+  const [showPottyOptions, setShowPottyOptions] = useState(false);
 
   // Meal state
   const [mealType, setMealType] = useState('Breakfast');
@@ -33,7 +34,10 @@ export default function LogButtons({ dateStr }) {
   };
 
   const handleSleep = (action) => addLog({ type: 'sleep', action });
-  const handleNappy = (action) => addLog({ type: 'nappy', action });
+  const handleNappy = (action) => {
+    addLog({ type: 'nappy', action });
+    setShowPottyOptions(false);
+  };
   
   const handleMeal = (e) => {
     e.preventDefault();
@@ -53,7 +57,10 @@ export default function LogButtons({ dateStr }) {
         {['sleep', 'meal', 'nappy', 'medicine'].map(tab => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              setActiveTab(tab);
+              setShowPottyOptions(false);
+            }}
             className={`flex-1 min-w-[80px] py-3 text-sm font-medium capitalize whitespace-nowrap ${
               activeTab === tab ? 'bg-gray-100 text-gray-900 border-b-2 border-indigo-500' : 'text-gray-500 hover:bg-gray-50'
             }`}
@@ -77,17 +84,43 @@ export default function LogButtons({ dateStr }) {
 
         {activeTab === 'nappy' && (
           <div className="grid grid-cols-2 gap-3">
-            {['Wet', 'Dirty', 'Both', 'Dry', 'Potty Attempt'].map(type => (
+            {['Wet', 'Dirty', 'Both', 'Dry'].map(type => (
               <button
                 key={type}
                 onClick={() => handleNappy(type)}
-                className={`py-3 rounded-xl font-semibold active:bg-pink-200 ${
-                  type === 'Potty Attempt' ? 'col-span-2 bg-purple-100 text-purple-700' : 'bg-pink-50 text-pink-700'
-                }`}
+                className="py-3 rounded-xl font-semibold bg-pink-50 text-pink-700 active:bg-pink-200"
               >
                 {type}
               </button>
             ))}
+
+            <button
+              type="button"
+              onClick={() => setShowPottyOptions(prev => !prev)}
+              aria-expanded={showPottyOptions}
+              className={`col-span-2 py-3 rounded-xl font-semibold transition-colors ${
+                showPottyOptions
+                  ? 'bg-purple-200 text-purple-800'
+                  : 'bg-purple-100 text-purple-700 active:bg-purple-200'
+              }`}
+            >
+              Potty
+            </button>
+
+            {showPottyOptions && (
+              <div className="col-span-2 grid grid-cols-2 gap-3 pt-1">
+                {['Wet', 'Dirty'].map(subType => (
+                  <button
+                    key={`Potty (${subType})`}
+                    type="button"
+                    onClick={() => handleNappy(`Potty (${subType})`)}
+                    className="py-3 rounded-xl font-semibold bg-purple-50 text-purple-700 border border-purple-200 active:bg-purple-200"
+                  >
+                    Potty ({subType})
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

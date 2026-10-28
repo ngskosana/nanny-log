@@ -41,6 +41,8 @@ export default function SummaryDashboard({ logs }) {
         if (log.action === 'Dirty') dirtyCount++;
         if (log.action === 'Both') { wetCount++; dirtyCount++; }
         if (log.action === 'Potty Attempt') pottyCount++;
+        if (log.action === 'Potty (Wet)') { pottyCount++; wetCount++; }
+        if (log.action === 'Potty (Dirty)') { pottyCount++; dirtyCount++; }
       }
       if (log.type === 'meal' && !lastMeal) {
         lastMeal = log;
